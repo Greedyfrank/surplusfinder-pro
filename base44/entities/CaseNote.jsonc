@@ -1,0 +1,50 @@
+{
+  "name": "CaseNote",
+  "type": "object",
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "description": "ID of the associated SurplusRecord"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "note",
+        "status_change",
+        "outreach",
+        "document",
+        "task",
+        "contact_log",
+        "compliance"
+      ],
+      "description": "Type of timeline entry"
+    },
+    "title": {
+      "type": "string",
+      "description": "Brief title"
+    },
+    "content": {
+      "type": "string",
+      "description": "Full content/details"
+    },
+    "task_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Due date if this is a task"
+    },
+    "task_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether task is completed"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Attached file URL"
+    }
+  },
+  "required": [
+    "record_id",
+    "type",
+    "title"
+  ]
+}

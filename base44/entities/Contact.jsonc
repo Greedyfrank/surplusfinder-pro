@@ -1,0 +1,54 @@
+{
+  "name": "Contact",
+  "type": "object",
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "description": "ID of the associated SurplusRecord"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Full name of the contact"
+    },
+    "mailing_address": {
+      "type": "string",
+      "description": "Mailing address"
+    },
+    "phone_numbers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Phone numbers"
+    },
+    "emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Email addresses"
+    },
+    "confidence_score": {
+      "type": "number",
+      "description": "Confidence score 0-100"
+    },
+    "source_provider": {
+      "type": "string",
+      "description": "Data source provider name"
+    },
+    "last_verified_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date contact was last verified"
+    },
+    "do_not_contact": {
+      "type": "boolean",
+      "default": false,
+      "description": "Do Not Contact flag"
+    }
+  },
+  "required": [
+    "record_id",
+    "full_name"
+  ]
+}

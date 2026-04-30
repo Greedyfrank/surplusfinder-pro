@@ -1,0 +1,63 @@
+{
+  "name": "OutreachMessage",
+  "type": "object",
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "description": "ID of the associated SurplusRecord"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "ID of the associated Contact"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "sms",
+        "email",
+        "letter"
+      ],
+      "description": "Outreach type"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Subject line for email"
+    },
+    "body": {
+      "type": "string",
+      "description": "Message body"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_approval",
+        "approved",
+        "sent",
+        "failed",
+        "opted_out"
+      ],
+      "default": "draft",
+      "description": "Message status"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Who approved this message"
+    },
+    "approved_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the message was approved"
+    },
+    "sent_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the message was sent"
+    }
+  },
+  "required": [
+    "record_id",
+    "type",
+    "body"
+  ]
+}

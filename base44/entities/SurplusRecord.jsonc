@@ -1,0 +1,103 @@
+{
+  "name": "SurplusRecord",
+  "type": "object",
+  "properties": {
+    "state": {
+      "type": "string",
+      "description": "State where the surplus exists"
+    },
+    "county": {
+      "type": "string",
+      "description": "County where the surplus exists"
+    },
+    "owner_name": {
+      "type": "string",
+      "description": "Name of the property owner"
+    },
+    "property_address": {
+      "type": "string",
+      "description": "Property address"
+    },
+    "parcel_apn": {
+      "type": "string",
+      "description": "Parcel or APN number"
+    },
+    "surplus_amount": {
+      "type": "number",
+      "description": "Surplus amount in dollars"
+    },
+    "sale_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the tax sale or auction"
+    },
+    "case_number": {
+      "type": "string",
+      "description": "Case or reference number"
+    },
+    "source_url": {
+      "type": "string",
+      "description": "URL to the public record source"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new_lead",
+        "needs_verification",
+        "contacted",
+        "responded",
+        "documents_sent",
+        "agreement_signed",
+        "submitted_to_county",
+        "paid",
+        "closed",
+        "do_not_contact"
+      ],
+      "default": "new_lead",
+      "description": "Current case status"
+    },
+    "deal_score": {
+      "type": "number",
+      "description": "Calculated deal score 0-100"
+    },
+    "deal_label": {
+      "type": "string",
+      "enum": [
+        "hot_lead",
+        "strong_lead",
+        "needs_research",
+        "low_priority",
+        "compliance_review"
+      ],
+      "description": "Deal classification label"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes"
+    },
+    "compliance_cleared": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether compliance checklist has been completed"
+    },
+    "company_fee_percent": {
+      "type": "number",
+      "description": "Fee percentage for this case"
+    },
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "tax_sale",
+        "foreclosure",
+        "auction",
+        "other"
+      ],
+      "description": "Type of surplus record"
+    }
+  },
+  "required": [
+    "owner_name",
+    "state",
+    "county"
+  ]
+}

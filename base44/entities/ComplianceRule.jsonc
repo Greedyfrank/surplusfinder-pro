@@ -1,0 +1,67 @@
+{
+  "name": "ComplianceRule",
+  "type": "object",
+  "properties": {
+    "state": {
+      "type": "string",
+      "description": "State abbreviation"
+    },
+    "state_name": {
+      "type": "string",
+      "description": "Full state name"
+    },
+    "third_party_recovery_legal": {
+      "type": "boolean",
+      "description": "Whether third-party recovery is legal"
+    },
+    "fee_cap_percent": {
+      "type": "number",
+      "description": "Maximum fee percentage allowed"
+    },
+    "fee_cap_notes": {
+      "type": "string",
+      "description": "Notes about fee caps"
+    },
+    "required_disclosures": {
+      "type": "string",
+      "description": "Required disclosures text"
+    },
+    "waiting_period_days": {
+      "type": "number",
+      "description": "Waiting period in days before contact"
+    },
+    "notary_required": {
+      "type": "boolean",
+      "description": "Whether notarization is required"
+    },
+    "poa_restrictions": {
+      "type": "string",
+      "description": "Power of attorney restrictions"
+    },
+    "licensing_requirements": {
+      "type": "string",
+      "description": "Licensing or registration requirements"
+    },
+    "prohibited_practices": {
+      "type": "string",
+      "description": "Prohibited practices"
+    },
+    "cancellation_rights": {
+      "type": "string",
+      "description": "Cancellation rights details"
+    },
+    "compliance_complexity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "description": "Overall compliance complexity rating"
+    }
+  },
+  "required": [
+    "state",
+    "state_name"
+  ]
+}
