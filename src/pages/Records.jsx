@@ -2,11 +2,12 @@ import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Download, LayoutList, Kanban } from "lucide-react";
+import { Plus, Upload, Download, LayoutList, Kanban, FileText } from "lucide-react";
 import RecordFilters from "@/components/records/RecordFilters";
 import RecordTable from "@/components/records/RecordTable";
 import KanbanBoard from "@/components/records/KanbanBoard";
 import AddRecordDialog from "@/components/records/AddRecordDialog";
+import PdfImportDialog from "@/components/records/PdfImportDialog";
 import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
 import { calculateDealScore } from "@/lib/dealScoring";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ export default function Records() {
   const [filters, setFilters] = useState({});
   const [showAdd, setShowAdd] = useState(false);
   const [view, setView] = useState("table");
+  const [showPdfImport, setShowPdfImport] = useState(false);
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -130,6 +132,9 @@ export default function Records() {
             <Upload className="w-4 h-4" /> Import CSV
           </Button>
           <input ref={fileInputRef} type="file" accept=".csv" onChange={handleCSVImport} className="hidden" />
+          <Button variant="outline" onClick={() => setShowPdfImport(true)} className="gap-2">
+            <FileText className="w-4 h-4" /> Import PDF
+          </Button>
           <Button onClick={() => setShowAdd(true)} className="gap-2">
             <Plus className="w-4 h-4" /> Add Record
           </Button>
@@ -157,6 +162,12 @@ export default function Records() {
         open={showAdd}
         onClose={() => setShowAdd(false)}
         onSave={(data) => createMutation.mutateAsync(data)}
+      />
+
+      <PdfImportDialog
+        open={showPdfImport}
+        onClose={() => setShowPdfImport(false)}
+        onImported={() => queryClient.invalidateQueries({ queryKey: ["surplus-records"] })}
       />
     </div>
   );
