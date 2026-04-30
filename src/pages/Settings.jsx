@@ -14,6 +14,7 @@ export default function Settings() {
     company_name: "", user_name: "", phone: "", email: "", website: "",
     fee_percent: "", sms_template: "", email_template: "", letter_template: "",
     api_beenverified: "", api_pdl: "", api_lexisnexis: "", api_tloxp: "", api_clearbit: "",
+    leads_api_url: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -81,6 +82,12 @@ export default function Settings() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-w-xl">
+                <div className="space-y-2">
+                  <Label>Leads API URL</Label>
+                  <Input value={settings.leads_api_url} onChange={e => update("leads_api_url", e.target.value)} placeholder="https://your-server.com/api/leads" />
+                  <p className="text-xs text-muted-foreground">Used by the "Sync Leads" button on the Dashboard to fetch and import new leads.</p>
+                </div>
+                <div className="border-t border-border pt-4" />
                 {[
                   { key: "api_beenverified", label: "BeenVerified API Key", placeholder: "Enter API key..." },
                   { key: "api_pdl", label: "People Data Labs API Key", placeholder: "Enter API key..." },

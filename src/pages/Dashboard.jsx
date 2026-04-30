@@ -1,8 +1,9 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { DollarSign, Users, Shield, TrendingUp, AlertTriangle, FileText, ArrowRight } from "lucide-react";
+import { DollarSign, Users, Shield, TrendingUp, AlertTriangle, FileText, ArrowRight, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatCard from "@/components/shared/StatCard";
@@ -12,10 +13,33 @@ import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
 import { formatCurrency } from "@/lib/dealScoring";
 
 export default function Dashboard() {
+  const [syncing, setSyncing] = useState(false);
+  const [leadsApiUrl, setLeadsApiUrl] = useState('');
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    base44.auth.me().then(user => {
+      if (user?.settings?.leads_api_url) setLeadsApiUrl(user.settings.leads_api_url);
+    }).catch(() => {});
+  }, []);
+
   const { data: records = [] } = useQuery({
     queryKey: ["surplus-records"],
     queryFn: () => base44.entities.SurplusRecord.list("-created_date", 100),
   });
+
+  const handleSync = async () => {
+    if (!leadsApiUrl) {
+      toast.error("Set your Leads API URL in Settings → Integrations first.");
+      return;
+    }
+    setSyncing(true);
+    const res = await base44.functions.invoke('syncLeads', { leads_api_url: leadsApiUrl });
+    const { created, updated, skipped } = res.data;
+    toast.success(`Sync complete: ${created} new, ${updated} updated, ${skipped} skipped`);
+    queryClient.invalidateQueries({ queryKey: ["surplus-records"] });
+    setSyncing(false);
+  };
 
   const totalSurplus = records.reduce((sum, r) => sum + (r.surplus_amount || 0), 0);
   const activeLeads = records.filter(r => !["closed", "paid", "do_not_contact"].includes(r.status)).length;
@@ -41,12 +65,18 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Surplus fund recovery overview</p>
         </div>
-        <Link to="/records">
-          <Button className="gap-2">
-            <TrendingUp className="w-4 h-4" />
-            View All Records
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleSync} disabled={syncing} className="gap-2">
+            <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Syncing..." : "Sync Leads"}
           </Button>
-        </Link>
+          <Link to="/records">
+            <Button className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              View All Records
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <DisclaimerBanner />
