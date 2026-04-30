@@ -32,8 +32,14 @@ export default function PdfImportDialog({ open, onClose, onImported }) {
     setStep("reviewing");
     setSummary("Uploading and analyzing PDF...");
 
-    // Upload the PDF
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    // Read file as base64 data URL, then upload
+    const fileDataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const { file_url } = await base44.integrations.Core.UploadFile({ file: fileDataUrl });
 
     // Extract records via AI
     const res = await base44.functions.invoke('extractPdfLeads', { file_url });
