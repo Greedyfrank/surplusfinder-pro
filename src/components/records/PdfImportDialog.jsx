@@ -3,7 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
-import { FileText, Upload, CheckCircle, AlertCircle, Loader2, X } from "lucide-react";
+import { appParams } from "@/lib/app-params";
+import axios from "axios";
+import { FileText, Upload, CheckCircle, Loader2, X } from "lucide-react";
 import { calculateDealScore } from "@/lib/dealScoring";
 import { toast } from "sonner";
 
@@ -32,28 +34,36 @@ export default function PdfImportDialog({ open, onClose, onImported }) {
     setStep("reviewing");
     setSummary("Uploading and analyzing PDF...");
 
-    // Read file as base64 data URL, then upload
-    const fileDataUrl = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-    const { file_url } = await base44.integrations.Core.UploadFile({ file: fileDataUrl });
+    try {
+      // Send raw File via FormData so backend receives a proper UploadFile
+      const formData = new FormData();
+      formData.append("file", file);
 
-    // Extract records via AI
-    const res = await base44.functions.invoke('extractPdfLeads', { file_url });
-    const { records, summary: s } = res.data;
+      const { functionsVersion, appId, appBaseUrl } = appParams;
+      const baseUrl = appBaseUrl || "";
+      const versionSegment = functionsVersion ? `/${functionsVersion}` : "";
+      const url = `${baseUrl}/api/functions${versionSegment}/${appId}/uploadAndExtractPdf`;
 
-    if (!records || records.length === 0) {
-      toast.error("No surplus records found in this PDF");
+      const token = appParams.token;
+      const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+
+      const res = await axios.post(url, formData, { headers });
+      const { records, summary: s } = res.data;
+
+      if (!records || records.length === 0) {
+        toast.error("No surplus records found in this PDF");
+        setStep("upload");
+        return;
+      }
+
+      setExtractedRecords(records);
+      setSummary(s || `Found ${records.length} record(s) in the document.`);
+      setSelected(records.map((_, i) => i));
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || "Upload failed";
+      toast.error(`PDF import error: ${msg}`);
       setStep("upload");
-      return;
     }
-
-    setExtractedRecords(records);
-    setSummary(s || `Found ${records.length} record(s) in the document.`);
-    setSelected(records.map((_, i) => i)); // select all by default
   };
 
   const handleDrop = (e) => {
