@@ -7,7 +7,7 @@ import RecordFilters from "@/components/records/RecordFilters";
 import RecordTable from "@/components/records/RecordTable";
 import KanbanBoard from "@/components/records/KanbanBoard";
 import AddRecordDialog from "@/components/records/AddRecordDialog";
-import PdfImportDialog from "@/components/records/PdfImportDialog";
+import PdfImportDialog from "@/components/records/PdfImportDialog.jsx";
 import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
 import { calculateDealScore } from "@/lib/dealScoring";
 import { toast } from "sonner";
