@@ -15,12 +15,25 @@ Deno.serve(async (req) => {
   }
 
   // Fetch from external API
-  const apiRes = await fetch(leads_api_url);
-  if (!apiRes.ok) {
-    return Response.json({ error: `API returned ${apiRes.status}` }, { status: 502 });
+  let apiRes;
+  try {
+    apiRes = await fetch(leads_api_url, {
+      headers: { 'Accept': 'application/json' },
+    });
+  } catch (fetchErr) {
+    return Response.json({ error: `Could not reach API: ${fetchErr.message}` }, { status: 502 });
   }
 
-  const apiLeads = await apiRes.json();
+  if (!apiRes.ok) {
+    return Response.json({ error: `API returned HTTP ${apiRes.status}` }, { status: 502 });
+  }
+
+  let apiLeads;
+  try {
+    apiLeads = await apiRes.json();
+  } catch {
+    return Response.json({ error: 'API response is not valid JSON' }, { status: 502 });
+  }
   const leads = Array.isArray(apiLeads) ? apiLeads : (apiLeads.leads || apiLeads.data || []);
 
   // Fetch all existing records to check duplicates

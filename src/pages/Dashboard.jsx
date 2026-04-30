@@ -34,11 +34,17 @@ export default function Dashboard() {
       return;
     }
     setSyncing(true);
-    const res = await base44.functions.invoke('syncLeads', { leads_api_url: leadsApiUrl });
-    const { created, updated, skipped } = res.data;
-    toast.success(`Sync complete: ${created} new, ${updated} updated, ${skipped} skipped`);
-    queryClient.invalidateQueries({ queryKey: ["surplus-records"] });
-    setSyncing(false);
+    try {
+      const res = await base44.functions.invoke('syncLeads', { leads_api_url: leadsApiUrl });
+      const { created, updated, skipped } = res.data;
+      toast.success(`Sync complete: ${created} new, ${updated} updated, ${skipped} skipped`);
+      queryClient.invalidateQueries({ queryKey: ["surplus-records"] });
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || "Sync failed";
+      toast.error(`Sync error: ${msg}`);
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const totalSurplus = records.reduce((sum, r) => sum + (r.surplus_amount || 0), 0);
