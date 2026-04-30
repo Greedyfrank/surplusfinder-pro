@@ -2,9 +2,10 @@ import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Download } from "lucide-react";
+import { Plus, Upload, Download, LayoutList, Kanban } from "lucide-react";
 import RecordFilters from "@/components/records/RecordFilters";
 import RecordTable from "@/components/records/RecordTable";
+import KanbanBoard from "@/components/records/KanbanBoard";
 import AddRecordDialog from "@/components/records/AddRecordDialog";
 import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
 import { calculateDealScore } from "@/lib/dealScoring";
@@ -13,12 +14,18 @@ import { toast } from "sonner";
 export default function Records() {
   const [filters, setFilters] = useState({});
   const [showAdd, setShowAdd] = useState(false);
+  const [view, setView] = useState("table");
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["surplus-records"],
     queryFn: () => base44.entities.SurplusRecord.list("-created_date", 200),
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }) => base44.entities.SurplusRecord.update(id, { status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["surplus-records"] }),
   });
 
   const createMutation = useMutation({
@@ -98,6 +105,24 @@ export default function Records() {
           <p className="text-sm text-muted-foreground mt-1">{records.length} total records</p>
         </div>
         <div className="flex gap-2">
+          <div className="flex rounded-lg border border-input overflow-hidden">
+            <Button
+              variant={view === "table" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setView("table")}
+              className="rounded-none gap-1.5"
+            >
+              <LayoutList className="w-4 h-4" /> Table
+            </Button>
+            <Button
+              variant={view === "kanban" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setView("kanban")}
+              className="rounded-none gap-1.5"
+            >
+              <Kanban className="w-4 h-4" /> Kanban
+            </Button>
+          </div>
           <Button variant="outline" onClick={handleExportCSV} className="gap-2">
             <Download className="w-4 h-4" /> Export CSV
           </Button>
@@ -119,6 +144,11 @@ export default function Records() {
         <div className="flex justify-center py-16">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : view === "kanban" ? (
+        <KanbanBoard
+          records={filtered}
+          onStatusChange={(id, status) => updateStatusMutation.mutate({ id, status })}
+        />
       ) : (
         <RecordTable records={filtered} />
       )}
