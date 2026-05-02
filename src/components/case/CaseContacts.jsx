@@ -4,16 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Phone, Mail, MapPin, UserCheck, Ban } from "lucide-react";
+import { Plus, Phone, Mail, MapPin, UserCheck, Ban, Search, ExternalLink, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getOsintLinks } from "@/lib/osintProviders";
 
-export default function CaseContacts({ contacts, recordId }) {
+export default function CaseContacts({ contacts, recordId, record }) {
   const [showAdd, setShowAdd] = useState(false);
+  const [showOsint, setShowOsint] = useState(false);
+  const [enriching, setEnriching] = useState(false);
   const [form, setForm] = useState({ full_name: "", mailing_address: "", phone_numbers: "", emails: "", confidence_score: "", source_provider: "" });
   const queryClient = useQueryClient();
+  const osintLinks = record ? getOsintLinks(record) : [];
 
   const handleSave = async () => {
     await base44.entities.Contact.create({
@@ -31,6 +35,24 @@ export default function CaseContacts({ contacts, recordId }) {
     setForm({ full_name: "", mailing_address: "", phone_numbers: "", emails: "", confidence_score: "", source_provider: "" });
   };
 
+  const handleEnrich = async () => {
+    if (!recordId) return;
+    setEnriching(true);
+    try {
+      const result = await base44.functions.invoke("enrichContact", { record_id: recordId });
+      if (result?.data?.matched === false) {
+        toast.info("No People Data Labs match found");
+        return;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["contacts", recordId] });
+      toast.success("Contact enriched");
+    } catch (err) {
+      toast.error(err?.response?.data?.error || err?.message || "Could not enrich contact");
+    } finally {
+      setEnriching(false);
+    }
+  };
+
   const toggleDNC = async (contact) => {
     await base44.entities.Contact.update(contact.id, { do_not_contact: !contact.do_not_contact });
     queryClient.invalidateQueries({ queryKey: ["contacts", recordId] });
@@ -42,12 +64,42 @@ export default function CaseContacts({ contacts, recordId }) {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold">Contacts ({contacts.length})</CardTitle>
-            <Button size="sm" variant="outline" onClick={() => setShowAdd(true)} className="gap-1">
-              <Plus className="w-3 h-3" /> Add
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={handleEnrich} disabled={!record || enriching} className="gap-1">
+                {enriching ? <RefreshCw className="w-3 h-3 animate-spin" /> : <UserCheck className="w-3 h-3" />}
+                {enriching ? "Finding" : "PDL"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowOsint(v => !v)} disabled={!record} className="gap-1">
+                <Search className="w-3 h-3" /> OSINT
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowAdd(true)} className="gap-1">
+                <Plus className="w-3 h-3" /> Add
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
+          {showOsint && (
+            <div className="rounded-lg border bg-muted/20 p-3">
+              <div className="grid grid-cols-2 gap-2">
+                {osintLinks.map(link => (
+                  <a
+                    key={link.label}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-2 rounded-md border bg-background px-3 py-2 text-xs font-medium hover:bg-muted"
+                  >
+                    <span>{link.label}</span>
+                    <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                  </a>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] leading-4 text-muted-foreground">
+                Manual verification only. Follow provider terms and applicable law before outreach.
+              </p>
+            </div>
+          )}
           {contacts.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">No contacts added yet</p>
           )}

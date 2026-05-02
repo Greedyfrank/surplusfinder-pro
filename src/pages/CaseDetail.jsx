@@ -67,7 +67,7 @@ export default function CaseDetail() {
           <CaseTimeline notes={notes} recordId={id} />
         </div>
         <div className="space-y-6">
-          <CaseContacts contacts={contacts} recordId={id} />
+          <CaseContacts contacts={contacts} recordId={id} record={record} />
         </div>
       </div>
     </div>

@@ -94,8 +94,8 @@ export default function Settings() {
                 </div>
                 <div className="border-t border-border pt-4" />
                 {[
-                  { key: "api_beenverified", label: "BeenVerified API Key", placeholder: "Enter API key..." },
-                  { key: "api_pdl", label: "People Data Labs API Key", placeholder: "Enter API key..." },
+                  { key: "api_beenverified", label: "BeenVerified Account/API Key", placeholder: "Optional reference..." },
+                  { key: "api_pdl", label: "People Data Labs API Key (Automated)", placeholder: "Enter API key..." },
                   { key: "api_lexisnexis", label: "LexisNexis API Key", placeholder: "Enter API key..." },
                   { key: "api_tloxp", label: "TLOxp API Key", placeholder: "Enter API key..." },
                   { key: "api_clearbit", label: "Clearbit API Key", placeholder: "Enter API key..." },
