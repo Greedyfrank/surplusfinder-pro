@@ -8,6 +8,7 @@ import axios from "axios";
 import { FileText, Upload, CheckCircle, Loader2, X } from "lucide-react";
 import { calculateDealScore } from "@/lib/dealScoring";
 import { parseSurplusRecordsFromPdfText } from "@/lib/importRecords";
+import { dedupeRecords, recordIdentityKey } from "@/lib/records";
 import { toast } from "sonner";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import pdfWorker from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
@@ -44,7 +45,7 @@ const pageContentToLines = (content) => {
   );
 };
 
-export default function PdfImportDialog({ open, onClose, onImported }) {
+export default function PdfImportDialog({ open, onClose, onImported, existingRecords = [] }) {
   const [step, setStep] = useState("upload"); // upload | reviewing | importing
   const [extractedRecords, setExtractedRecords] = useState([]);
   const [summary, setSummary] = useState("");
@@ -110,19 +111,34 @@ export default function PdfImportDialog({ open, onClose, onImported }) {
       let records = [];
       let s = "";
 
-      try {
-        const remoteResult = await extractRecordsWithFunction(file);
-        records = remoteResult.records;
-        s = remoteResult.summary;
-      } catch (remoteErr) {
-        const localRecords = await extractRecordsLocally(file);
+      const localRecords = await extractRecordsLocally(file);
+      if (localRecords.length > 0) {
         records = localRecords;
         s = `Found ${localRecords.length} record(s) with local PDF text extraction.`;
-        if (localRecords.length > 0) {
-          toast.info("AI extraction was unavailable, so the PDF was parsed locally.");
-        } else {
+      } else {
+        try {
+          const remoteResult = await extractRecordsWithFunction(file);
+          records = remoteResult.records;
+          s = remoteResult.summary;
+        } catch (remoteErr) {
           throw remoteErr;
         }
+      }
+
+      if (records.length > 0) {
+        const existingKeys = new Set(existingRecords.map(recordIdentityKey));
+        const uniqueRecords = dedupeRecords(records);
+        records = uniqueRecords.filter((record) => !existingKeys.has(recordIdentityKey(record)));
+        const skipped = uniqueRecords.length - records.length;
+        if (skipped > 0) {
+          toast.info(`${skipped} duplicate PDF record(s) were skipped.`);
+        }
+      }
+
+      if (records.length === 0 && localRecords?.length > 0) {
+        toast.error("All records in this PDF already exist.");
+        setStep("upload");
+        return;
       }
 
       if (!records || records.length === 0) {

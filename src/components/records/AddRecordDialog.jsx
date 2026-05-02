@@ -19,14 +19,17 @@ export default function AddRecordDialog({ open, onClose, onSave, initialData }) 
 
   const handleSave = async () => {
     setSaving(true);
-    await onSave({
-      ...form,
-      surplus_amount: form.surplus_amount ? parseFloat(form.surplus_amount) : undefined,
-      status: "new_lead",
-    });
-    setSaving(false);
-    setForm(emptyRecord);
-    onClose();
+    try {
+      await onSave({
+        ...form,
+        surplus_amount: form.surplus_amount ? parseFloat(form.surplus_amount) : undefined,
+        status: "new_lead",
+      });
+      setForm(emptyRecord);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }));

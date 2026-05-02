@@ -32,7 +32,10 @@ export function calculateDealScore(record, contacts = [], complianceRule = null)
 
   // Record age (0-15 points)
   if (record.sale_date) {
-    const daysSinceSale = Math.floor((Date.now() - new Date(record.sale_date).getTime()) / (1000 * 60 * 60 * 24));
+    const saleDate = /^\d{4}-\d{2}-\d{2}$/.test(record.sale_date)
+      ? new Date(`${record.sale_date}T00:00:00`)
+      : new Date(record.sale_date);
+    const daysSinceSale = Math.floor((Date.now() - saleDate.getTime()) / (1000 * 60 * 60 * 24));
     if (daysSinceSale <= 90) score += 15;
     else if (daysSinceSale <= 180) score += 12;
     else if (daysSinceSale <= 365) score += 8;
@@ -60,7 +63,7 @@ export function calculateDealScore(record, contacts = [], complianceRule = null)
 }
 
 export function formatCurrency(amount) {
-  if (!amount && amount !== 0) return "—";
+  if (!amount && amount !== 0) return "-";
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 }
 

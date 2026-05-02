@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { FileText, Download, Printer, ClipboardList, Shield, UserCheck, FileCheck, Building2, Briefcase } from "lucide-react";
 import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
 import { formatCurrency } from "@/lib/dealScoring";
+import { formatRecordDate, listSurplusRecords } from "@/lib/records";
 import { format } from "date-fns";
 
 const documentTypes = [
@@ -33,7 +34,7 @@ function generateDocument(type, record, contacts, settings) {
     "[County]": record.county || "_______________",
     "[State]": record.state || "_______________",
     "[Parcel/APN]": record.parcel_apn || "_______________",
-    "[Sale Date]": record.sale_date ? format(new Date(record.sale_date), "MMMM d, yyyy") : "_______________",
+    "[Sale Date]": record.sale_date ? formatRecordDate(record.sale_date, "MMMM d, yyyy") : "_______________",
     "[Surplus Amount]": record.surplus_amount ? formatCurrency(record.surplus_amount) : "_______________",
     "[Case Number]": record.case_number || "_______________",
     "[Contact Phone]": contact.phone_numbers?.[0] || "_______________",
@@ -51,10 +52,10 @@ function generateDocument(type, record, contacts, settings) {
   const templates = {
     owner_info: `OWNER INFORMATION FORM\nDate: [Date]\n\nOwner Name: [Owner Name]\nMailing Address: [Contact Address]\nPhone: [Contact Phone]\nEmail: [Contact Email]\n\nProperty Address: [Property Address]\nCounty: [County], [State]\nParcel/APN: [Parcel/APN]\n\nSale Date: [Sale Date]\nSurplus Amount: [Surplus Amount]\nCase Number: [Case Number]`,
     intake: `SURPLUS RECOVERY INTAKE FORM\nDate: [Date]\n\n--- OWNER INFORMATION ---\nFull Name: [Owner Name]\nAddress: [Contact Address]\nPhone: [Contact Phone]\nEmail: [Contact Email]\n\n--- PROPERTY DETAILS ---\nProperty Address: [Property Address]\nCounty/State: [County], [State]\nParcel/APN: [Parcel/APN]\nSale Date: [Sale Date]\nSurplus Amount: [Surplus Amount]\nCase Number: [Case Number]\n\n--- RECOVERY SERVICE ---\nCompany: [Company]\nAgent: [User Name]\nService Fee: [Fee %] of recovered surplus\n\nNotes:\n_________________________________`,
-    agreement: `RECOVERY SERVICES AGREEMENT\nDate: [Date]\n\nBETWEEN:\nClient: [Owner Name] ("Client")\nService Provider: [Company] ("Company")\n\n1. SERVICES\nCompany agrees to assist Client in recovering surplus funds from [County] County, [State], related to the property at [Property Address], Parcel/APN [Parcel/APN].\n\n2. ESTIMATED SURPLUS: [Surplus Amount]\n\n3. FEE STRUCTURE\nCompany shall receive [Fee %] of any successfully recovered surplus funds. Fee is only due upon successful recovery.\n\n4. IMPORTANT DISCLOSURES\n• Client may file a claim independently at no cost.\n• Company is NOT a government agency.\n• There is NO guarantee of recovery.\n• Company does not provide legal advice.\n\n5. CANCELLATION RIGHTS\nClient may cancel this agreement within the time period specified by applicable state law. Written notice required.\n\n6. NO GUARANTEE\nCompany makes no guarantees regarding the outcome of any claim.\n\nClient Signature: _______________________ Date: _________\n\nCompany Representative: _______________________ Date: _________\n\n[ ] Notarized (if required by state law)\nNotary: _______________________\nDate: _________\nSeal:`,
-    disclosure: `DISCLOSURE STATEMENT\nDate: [Date]\n\nTO: [Owner Name]\nFROM: [Company]\nRE: Surplus Funds — [Property Address]\n\nIMPORTANT DISCLOSURES:\n\n1. [Company] is NOT a government agency and is not affiliated with any government entity.\n\n2. You may be entitled to claim surplus funds directly from [County] County, [State] at no cost.\n\n3. Our fee for recovery assistance services is [Fee %] of any successfully recovered amount.\n\n4. There is no guarantee that surplus funds will be recovered.\n\n5. This is not legal advice. We recommend consulting an attorney.\n\n6. You have the right to cancel this agreement per your state's cancellation provisions.\n\nAcknowledgment:\nI have read and understand the above disclosures.\n\nSignature: _______________________ Date: _________\nPrinted Name: [Owner Name]`,
+    agreement: `RECOVERY SERVICES AGREEMENT\nDate: [Date]\n\nBETWEEN:\nClient: [Owner Name] ("Client")\nService Provider: [Company] ("Company")\n\n1. SERVICES\nCompany agrees to assist Client in recovering surplus funds from [County] County, [State], related to the property at [Property Address], Parcel/APN [Parcel/APN].\n\n2. ESTIMATED SURPLUS: [Surplus Amount]\n\n3. FEE STRUCTURE\nCompany shall receive [Fee %] of any successfully recovered surplus funds. Fee is only due upon successful recovery.\n\n4. IMPORTANT DISCLOSURES\n- Client may file a claim independently at no cost.\n- Company is NOT a government agency.\n- There is NO guarantee of recovery.\n- Company does not provide legal advice.\n\n5. CANCELLATION RIGHTS\nClient may cancel this agreement within the time period specified by applicable state law. Written notice required.\n\n6. NO GUARANTEE\nCompany makes no guarantees regarding the outcome of any claim.\n\nClient Signature: _______________________ Date: _________\n\nCompany Representative: _______________________ Date: _________\n\n[ ] Notarized (if required by state law)\nNotary: _______________________\nDate: _________\nSeal:`,
+    disclosure: `DISCLOSURE STATEMENT\nDate: [Date]\n\nTO: [Owner Name]\nFROM: [Company]\nRE: Surplus Funds - [Property Address]\n\nIMPORTANT DISCLOSURES:\n\n1. [Company] is NOT a government agency and is not affiliated with any government entity.\n\n2. You may be entitled to claim surplus funds directly from [County] County, [State] at no cost.\n\n3. Our fee for recovery assistance services is [Fee %] of any successfully recovered amount.\n\n4. There is no guarantee that surplus funds will be recovered.\n\n5. This is not legal advice. We recommend consulting an attorney.\n\n6. You have the right to cancel this agreement per your state's cancellation provisions.\n\nAcknowledgment:\nI have read and understand the above disclosures.\n\nSignature: _______________________ Date: _________\nPrinted Name: [Owner Name]`,
     authorization: `AUTHORIZATION FORM\nDate: [Date]\n\nI, [Owner Name], hereby authorize [Company] and its representatives to:\n\n1. Make inquiries on my behalf regarding surplus funds related to:\n   Property: [Property Address]\n   County/State: [County], [State]\n   Parcel/APN: [Parcel/APN]\n   Case Number: [Case Number]\n\n2. Submit claim documents to the appropriate county authority.\n\n3. Communicate with county officials regarding the status of the claim.\n\nThis authorization does NOT constitute a power of attorney.\n\nOwner Signature: _______________________ Date: _________\nPrinted Name: [Owner Name]`,
-    checklist: `CLAIM PACKET CHECKLIST\nDate: [Date]\n\nCase: [Owner Name] — [County], [State]\nProperty: [Property Address]\nSurplus: [Surplus Amount]\n\n[ ] Owner Information Form — completed\n[ ] Recovery Services Agreement — signed\n[ ] Disclosure Statement — signed\n[ ] Authorization Form — signed\n[ ] Proof of Identity (copy of ID)\n[ ] Proof of Ownership / Interest\n[ ] County Claim Form (if required)\n[ ] County Cover Letter\n[ ] Notarization (if required)\n[ ] Return envelope / submission method confirmed\n\nSubmission Method: _______________\nSubmission Date: _______________\nTracking Number: _______________`,
+    checklist: `CLAIM PACKET CHECKLIST\nDate: [Date]\n\nCase: [Owner Name] - [County], [State]\nProperty: [Property Address]\nSurplus: [Surplus Amount]\n\n[ ] Owner Information Form - completed\n[ ] Recovery Services Agreement - signed\n[ ] Disclosure Statement - signed\n[ ] Authorization Form - signed\n[ ] Proof of Identity (copy of ID)\n[ ] Proof of Ownership / Interest\n[ ] County Claim Form (if required)\n[ ] County Cover Letter\n[ ] Notarization (if required)\n[ ] Return envelope / submission method confirmed\n\nSubmission Method: _______________\nSubmission Date: _______________\nTracking Number: _______________`,
     cover_letter: `[Date]\n\n[County] County\nSurplus Funds Department\n\nRe: Surplus Fund Claim\nProperty: [Property Address]\nParcel/APN: [Parcel/APN]\nSale Date: [Sale Date]\nCase Number: [Case Number]\n\nDear Sir/Madam,\n\nPlease find enclosed a claim for surplus funds on behalf of [Owner Name] related to the above-referenced property.\n\nEnclosed documents include the required claim forms and supporting documentation.\n\nPlease do not hesitate to contact us with any questions.\n\nSincerely,\n\n[User Name]\n[Company]\n[Company Phone]\n[Company Email]`,
     case_summary: `INTERNAL CASE SUMMARY\nDate: [Date]\n\n--- CASE OVERVIEW ---\nOwner: [Owner Name]\nProperty: [Property Address]\nCounty/State: [County], [State]\nParcel/APN: [Parcel/APN]\nSale Date: [Sale Date]\nSurplus Amount: [Surplus Amount]\nCase Number: [Case Number]\n\n--- CONTACT INFO ---\nPhone: [Contact Phone]\nEmail: [Contact Email]\nAddress: [Contact Address]\n\n--- SERVICE DETAILS ---\nCompany: [Company]\nAgent: [User Name]\nFee: [Fee %]\n\n--- STATUS ---\nCurrent Status: ${(record.status || "").replace(/_/g, " ")}\nDeal Score: ${record.deal_score || "N/A"}\n\n--- NOTES ---\n${record.notes || "None"}`,
   };
@@ -74,8 +75,14 @@ export default function Documents() {
 
   const { data: records = [] } = useQuery({
     queryKey: ["surplus-records"],
-    queryFn: () => base44.entities.SurplusRecord.list("-created_date", 200),
+    queryFn: listSurplusRecords,
   });
+
+  React.useEffect(() => {
+    base44.auth.me().then(user => {
+      if (user?.settings) setCompanySettings(prev => ({ ...prev, ...user.settings }));
+    }).catch(() => {});
+  }, []);
 
   const record = records.find(r => r.id === selectedRecord);
 
@@ -135,7 +142,7 @@ export default function Documents() {
                 <Select value={selectedRecord} onValueChange={setSelectedRecord}>
                   <SelectTrigger><SelectValue placeholder="Choose record" /></SelectTrigger>
                   <SelectContent>
-                    {records.map(r => <SelectItem key={r.id} value={r.id}>{r.owner_name} — {r.county}</SelectItem>)}
+                    {records.map(r => <SelectItem key={r.id} value={r.id}>{r.owner_name} - {r.county}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

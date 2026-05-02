@@ -11,6 +11,7 @@ import PdfImportDialog from "@/components/records/PdfImportDialog";
 import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
 import { calculateDealScore } from "@/lib/dealScoring";
 import { mapCsvRowToSurplusRecord, parseCsvText } from "@/lib/importRecords";
+import { dedupeRecords, listSurplusRecords, recordIdentityKey } from "@/lib/records";
 import { toast } from "sonner";
 
 export default function Records() {
@@ -25,7 +26,7 @@ export default function Records() {
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["surplus-records"],
-    queryFn: () => base44.entities.SurplusRecord.list("-created_date", 200),
+    queryFn: listSurplusRecords,
   });
 
   const updateStatusMutation = useMutation({
@@ -69,17 +70,19 @@ export default function Records() {
         return data;
       });
 
-      const validRows = rows.filter((row) => row.owner_name && row.state && row.county);
-      const skipped = rows.length - validRows.length;
+      const existingKeys = new Set(records.map(recordIdentityKey));
+      const validRows = dedupeRecords(rows.filter((row) => row.owner_name && row.state && row.county));
+      const newRows = validRows.filter((row) => !existingKeys.has(recordIdentityKey(row)));
+      const skipped = rows.length - newRows.length;
 
-      if (validRows.length === 0) {
-        toast.error("No importable rows found. CSV rows need owner, state, and county fields.");
+      if (newRows.length === 0) {
+        toast.error("No new importable rows found. CSV rows may already exist or may be missing owner, state, and county.");
         return;
       }
 
       let imported = 0;
-      for (const row of validRows) {
-        setCsvProgress(`Importing ${imported + 1} of ${validRows.length}...`);
+      for (const row of newRows) {
+        setCsvProgress(`Importing ${imported + 1} of ${newRows.length}...`);
         await base44.entities.SurplusRecord.create(row);
         imported += 1;
       }
@@ -189,6 +192,7 @@ export default function Records() {
       <PdfImportDialog
         open={showPdfImport}
         onClose={() => setShowPdfImport(false)}
+        existingRecords={records}
         onImported={() => queryClient.invalidateQueries({ queryKey: ["surplus-records"] })}
       />
     </div>

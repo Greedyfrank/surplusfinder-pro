@@ -7,17 +7,18 @@ import CaseDetails from "@/components/case/CaseDetails";
 import CaseContacts from "@/components/case/CaseContacts";
 import CaseTimeline from "@/components/case/CaseTimeline";
 import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
+import { getSurplusRecordById } from "@/lib/records";
 import { toast } from "sonner";
 
 export default function CaseDetail() {
   const { id } = useParams();
   const queryClient = useQueryClient();
 
-  const { data: records = [] } = useQuery({
-    queryKey: ["surplus-records"],
-    queryFn: () => base44.entities.SurplusRecord.list("-created_date", 200),
+  const { data: record, isLoading: isLoadingRecord } = useQuery({
+    queryKey: ["surplus-record", id],
+    queryFn: () => getSurplusRecordById(id),
+    enabled: !!id,
   });
-  const record = records.find(r => r.id === id);
 
   const { data: contacts = [] } = useQuery({
     queryKey: ["contacts", id],
@@ -34,15 +35,24 @@ export default function CaseDetail() {
   const updateStatus = useMutation({
     mutationFn: (status) => base44.entities.SurplusRecord.update(id, { status }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["surplus-record", id] });
       queryClient.invalidateQueries({ queryKey: ["surplus-records"] });
       toast.success("Status updated");
     },
   });
 
-  if (!record) {
+  if (!record && isLoadingRecord) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!record) {
+    return (
+      <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
+        Record not found.
       </div>
     );
   }

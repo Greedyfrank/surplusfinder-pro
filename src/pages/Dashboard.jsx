@@ -11,6 +11,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import DealScoreBadge from "@/components/shared/DealScoreBadge";
 import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
 import { formatCurrency } from "@/lib/dealScoring";
+import { listSurplusRecords } from "@/lib/records";
 
 export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
@@ -25,12 +26,12 @@ export default function Dashboard() {
 
   const { data: records = [] } = useQuery({
     queryKey: ["surplus-records"],
-    queryFn: () => base44.entities.SurplusRecord.list("-created_date", 100),
+    queryFn: listSurplusRecords,
   });
 
   const handleSync = async () => {
     if (!leadsApiUrl) {
-      toast.error("Set your Leads API URL in Settings → Integrations first.");
+      toast.error("Set your Leads API URL in Settings -> Integrations first.");
       return;
     }
     setSyncing(true);

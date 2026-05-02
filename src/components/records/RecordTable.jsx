@@ -1,10 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
 import StatusBadge from "@/components/shared/StatusBadge";
 import DealScoreBadge from "@/components/shared/DealScoreBadge";
 import { formatCurrency } from "@/lib/dealScoring";
+import { formatRecordDate } from "@/lib/records";
 import { ChevronRight } from "lucide-react";
 
 export default function RecordTable({ records }) {
@@ -47,13 +47,13 @@ export default function RecordTable({ records }) {
                 <span className="font-medium">{r.state}</span>
               </TableCell>
               <TableCell className="text-sm text-muted-foreground font-mono text-xs">
-                {r.parcel_apn || "—"}
+                {r.parcel_apn || "-"}
               </TableCell>
               <TableCell className="text-sm font-semibold text-primary">
                 {formatCurrency(r.surplus_amount)}
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {r.sale_date ? format(new Date(r.sale_date), "MMM d, yyyy") : "—"}
+                {r.sale_date ? formatRecordDate(r.sale_date) : "-"}
               </TableCell>
               <TableCell>
                 <DealScoreBadge score={r.deal_score || 0} label={r.deal_label} />

@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { format } from "date-fns";
 import { formatCurrency } from "@/lib/dealScoring";
+import { formatRecordDate } from "@/lib/records";
 import { Badge } from "@/components/ui/badge";
 
 export default function CaseDetails({ record }) {
@@ -11,7 +11,7 @@ export default function CaseDetails({ record }) {
     { label: "Property Address", value: record.property_address },
     { label: "Parcel / APN", value: record.parcel_apn },
     { label: "Surplus Amount", value: formatCurrency(record.surplus_amount) },
-    { label: "Sale Date", value: record.sale_date ? format(new Date(record.sale_date), "MMMM d, yyyy") : null },
+    { label: "Sale Date", value: record.sale_date ? formatRecordDate(record.sale_date, "MMMM d, yyyy") : null },
     { label: "Case Number", value: record.case_number },
     { label: "Record Type", value: record.record_type?.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()) },
     { label: "Fee %", value: record.company_fee_percent ? `${record.company_fee_percent}%` : null },

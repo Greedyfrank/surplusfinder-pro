@@ -28,9 +28,14 @@ export default function Settings() {
 
   const handleSave = async () => {
     setSaving(true);
-    await base44.auth.updateMe({ settings });
-    toast.success("Settings saved");
-    setSaving(false);
+    try {
+      await base44.auth.updateMe({ settings });
+      toast.success("Settings saved");
+    } catch (err) {
+      toast.error(err?.message || "Could not save settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const update = (key, value) => setSettings(prev => ({ ...prev, [key]: value }));
