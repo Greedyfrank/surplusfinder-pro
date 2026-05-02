@@ -7,9 +7,10 @@ import RecordFilters from "@/components/records/RecordFilters";
 import RecordTable from "@/components/records/RecordTable";
 import KanbanBoard from "@/components/records/KanbanBoard";
 import AddRecordDialog from "@/components/records/AddRecordDialog";
-import PdfImportDialog from "@/components/records/PdfImportDialog.jsx";
+import PdfImportDialog from "@/components/records/PdfImportDialog";
 import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
 import { calculateDealScore } from "@/lib/dealScoring";
+import { mapCsvRowToSurplusRecord, parseCsvText } from "@/lib/importRecords";
 import { toast } from "sonner";
 
 export default function Records() {
@@ -17,6 +18,8 @@ export default function Records() {
   const [showAdd, setShowAdd] = useState(false);
   const [view, setView] = useState("table");
   const [showPdfImport, setShowPdfImport] = useState(false);
+  const [csvImporting, setCsvImporting] = useState(false);
+  const [csvProgress, setCsvProgress] = useState("");
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -45,33 +48,52 @@ export default function Records() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const text = await file.text();
-    const lines = text.split("\n").filter(l => l.trim());
-    if (lines.length < 2) { toast.error("CSV must have headers and data"); return; }
+    setCsvImporting(true);
+    setCsvProgress("Reading CSV...");
 
-    const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/\s+/g, "_"));
-    const rows = lines.slice(1).map(line => {
-      const values = line.split(",").map(v => v.trim().replace(/^"|"$/g, ""));
-      const obj = {};
-      headers.forEach((h, i) => {
-        if (h === "surplus_amount") obj[h] = parseFloat(values[i]) || 0;
-        else obj[h] = values[i] || "";
-      });
-      const { score, label } = calculateDealScore(obj);
-      obj.deal_score = score;
-      obj.deal_label = label;
-      obj.status = "new_lead";
-      return obj;
-    });
-
-    for (const row of rows) {
-      if (row.owner_name && row.state && row.county) {
-        await base44.entities.SurplusRecord.create(row);
+    try {
+      const text = await file.text();
+      const parsedRows = parseCsvText(text);
+      if (parsedRows.length === 0) {
+        toast.error("CSV must have headers and at least one data row");
+        return;
       }
+
+      const rows = parsedRows.map((row) => {
+        const data = mapCsvRowToSurplusRecord(row);
+        if (data.deal_score === undefined || !data.deal_label) {
+          const { score, label } = calculateDealScore(data);
+          data.deal_score = data.deal_score ?? score;
+          data.deal_label = data.deal_label || label;
+        }
+        return data;
+      });
+
+      const validRows = rows.filter((row) => row.owner_name && row.state && row.county);
+      const skipped = rows.length - validRows.length;
+
+      if (validRows.length === 0) {
+        toast.error("No importable rows found. CSV rows need owner, state, and county fields.");
+        return;
+      }
+
+      let imported = 0;
+      for (const row of validRows) {
+        setCsvProgress(`Importing ${imported + 1} of ${validRows.length}...`);
+        await base44.entities.SurplusRecord.create(row);
+        imported += 1;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["surplus-records"] });
+      toast.success(`Imported ${imported} record(s)${skipped ? `, skipped ${skipped}` : ""}`);
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || "CSV import failed";
+      toast.error(`CSV import error: ${msg}`);
+    } finally {
+      setCsvImporting(false);
+      setCsvProgress("");
+      e.target.value = "";
     }
-    queryClient.invalidateQueries({ queryKey: ["surplus-records"] });
-    toast.success(`Imported ${rows.length} records`);
-    e.target.value = "";
   };
 
   const handleExportCSV = () => {
@@ -128,8 +150,8 @@ export default function Records() {
           <Button variant="outline" onClick={handleExportCSV} className="gap-2">
             <Download className="w-4 h-4" /> Export CSV
           </Button>
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2">
-            <Upload className="w-4 h-4" /> Import CSV
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={csvImporting} className="gap-2">
+            <Upload className="w-4 h-4" /> {csvImporting ? csvProgress || "Importing..." : "Import CSV"}
           </Button>
           <input ref={fileInputRef} type="file" accept=".csv" onChange={handleCSVImport} className="hidden" />
           <Button variant="outline" onClick={() => setShowPdfImport(true)} className="gap-2">

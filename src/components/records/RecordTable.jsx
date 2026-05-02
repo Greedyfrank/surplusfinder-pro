@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import StatusBadge from "@/components/shared/StatusBadge";
 import DealScoreBadge from "@/components/shared/DealScoreBadge";
 import { formatCurrency } from "@/lib/dealScoring";
-import { ExternalLink, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 export default function RecordTable({ records }) {
   if (records.length === 0) {

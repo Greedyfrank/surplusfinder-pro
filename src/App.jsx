@@ -15,7 +15,6 @@ import Outreach from '@/pages/Outreach';
 import Documents from '@/pages/Documents';
 import AuditLog from '@/pages/AuditLog';
 import Settings from '@/pages/Settings';
-import PRReview from '@/pages/PRReview';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -51,7 +50,6 @@ const AuthenticatedApp = () => {
         <Route path="/documents" element={<Documents />} />
         <Route path="/audit" element={<AuditLog />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/pr-review" element={<PRReview />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

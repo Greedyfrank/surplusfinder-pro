@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useNavigate } from "react-router-dom";
 import { formatCurrency } from "@/lib/dealScoring";
-import StatusBadge from "@/components/shared/StatusBadge";
 import DealScoreBadge from "@/components/shared/DealScoreBadge";
 import { MapPin, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
