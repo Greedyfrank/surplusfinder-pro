@@ -10,10 +10,49 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Plus, Search, CheckCircle, XCircle } from "lucide-react";
+import { Shield, Plus, Search, CheckCircle, XCircle, ExternalLink } from "lucide-react";
 import { US_STATES } from "@/lib/dealScoring";
 import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
 import { toast } from "sonner";
+
+const officialResources = [
+  {
+    state: "PA",
+    title: "Pennsylvania Finder Registration",
+    note: "Registration, 15% fee cap, written agreement requirements.",
+    url: "https://www.patreasury.gov/unclaimed-property/finders/",
+  },
+  {
+    state: "CA",
+    title: "California Investigator Guidance",
+    note: "Disclosure contract, 10% fee cap, free owner claim route.",
+    url: "https://sco.ca.gov/upd_investigator_about.html",
+  },
+  {
+    state: "TX",
+    title: "Texas Heir-Finder Licensing Guidance",
+    note: "Private investigator licensing may apply beyond public-record review.",
+    url: "https://www.dps.texas.gov/section/private-security/heir-finders-and-investigations-related-unclaimed-accounts",
+  },
+  {
+    state: "FL",
+    title: "Florida Foreclosure Surplus Statute",
+    note: "Surplus-right assignments and owner-representation disclosure.",
+    url: "https://www.flsenate.gov/Laws/Statutes/2024/0045.033",
+  },
+  {
+    state: "IL",
+    title: "Illinois Finder Agreement Rules",
+    note: "Required agreement terms and 10% fee cap guidance.",
+    url: "https://www.ilga.gov/ftp/JCAR/AdminCode/074/074007600E06500R.html",
+  },
+  {
+    state: "OH",
+    title: "Ohio Finder Agreement Procedure",
+    note: "Agreement submission procedure and claim packet review.",
+    url: "https://dam.assets.ohio.gov/image/upload/com.ohio.gov/UNFD/Finders/Finder_Agreement_Procedure.pdf",
+  },
+];
 
 export default function Compliance() {
   const [search, setSearch] = useState("");
@@ -68,6 +107,33 @@ export default function Compliance() {
       </div>
 
       <DisclaimerBanner />
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold">Official Recovery-Agent Resources</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">Verify each state and county before using an agreement or collecting a fee.</p>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {officialResources.map(resource => (
+            <a
+              key={resource.url}
+              href={resource.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg border bg-muted/20 p-3 hover:bg-muted/40 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <Badge variant="outline" className="mb-2 text-[10px]">{resource.state}</Badge>
+                  <p className="text-sm font-medium">{resource.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-5">{resource.note}</p>
+                </div>
+                <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              </div>
+            </a>
+          ))}
+        </CardContent>
+      </Card>
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

@@ -12,7 +12,8 @@ import { toast } from "sonner";
 export default function Settings() {
   const [settings, setSettings] = useState({
     company_name: "", user_name: "", phone: "", email: "", website: "",
-    fee_percent: "", sms_template: "", email_template: "", letter_template: "",
+    fee_percent: "", agent_registration_number: "", agent_license_number: "", cancellation_period_days: "",
+    sms_template: "", email_template: "", letter_template: "",
     api_beenverified: "", api_pdl: "", api_lexisnexis: "", api_tloxp: "", api_clearbit: "",
     leads_api_url: "",
   });
@@ -72,6 +73,9 @@ export default function Settings() {
                 <div className="space-y-2"><Label>Email</Label><Input value={settings.email} onChange={e => update("email", e.target.value)} placeholder="contact@company.com" /></div>
                 <div className="space-y-2"><Label>Website</Label><Input value={settings.website} onChange={e => update("website", e.target.value)} placeholder="https://company.com" /></div>
                 <div className="space-y-2"><Label>Default Recovery Fee %</Label><Input type="number" value={settings.fee_percent} onChange={e => update("fee_percent", e.target.value)} placeholder="25" /></div>
+                <div className="space-y-2"><Label>Finder Registration/Certificate No.</Label><Input value={settings.agent_registration_number} onChange={e => update("agent_registration_number", e.target.value)} placeholder="State registration number" /></div>
+                <div className="space-y-2"><Label>License No.</Label><Input value={settings.agent_license_number} onChange={e => update("agent_license_number", e.target.value)} placeholder="PI or recovery license" /></div>
+                <div className="space-y-2"><Label>Default Cancellation Days</Label><Input type="number" value={settings.cancellation_period_days} onChange={e => update("cancellation_period_days", e.target.value)} placeholder="3" /></div>
               </div>
             </CardContent>
           </Card>
