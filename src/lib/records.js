@@ -33,29 +33,72 @@ export const formatRecordDate = (value, pattern = "MMM d, yyyy") => {
   return Number.isNaN(date.getTime()) ? "" : format(date, pattern);
 };
 
-export const recordIdentityKey = (record) => {
-  const caseNumber = `${record.case_number || ""}`.trim().toLowerCase();
-  if (caseNumber) return `case:${caseNumber}`;
+const normalizeIdentityText = (value) =>
+  `${value || ""}`
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(county|co)\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
-  const parcel = `${record.parcel_apn || ""}`.trim().toLowerCase();
-  const state = `${record.state || ""}`.trim().toLowerCase();
-  if (parcel && state) return `parcel:${state}:${parcel}`;
+const normalizeIdentityNumber = (value) =>
+  `${value || ""}`
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 
-  return [
-    "owner",
-    `${record.owner_name || ""}`.trim().toLowerCase(),
-    `${record.county || ""}`.trim().toLowerCase(),
-    `${record.state || ""}`.trim().toLowerCase(),
-    `${record.surplus_amount || 0}`,
-  ].join(":");
+const normalizeMoneyIdentity = (value) => {
+  const parsed = Number(`${value || 0}`.replace?.(/[$,]/g, "") ?? value);
+  return Number.isFinite(parsed) ? parsed.toFixed(2) : "0.00";
+};
+
+const parseMoneyIdentity = (value) => {
+  const parsed = Number(`${value || 0}`.replace?.(/[$,]/g, "") ?? value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const addKey = (keys, key, requiredParts) => {
+  if (requiredParts.every(Boolean)) keys.push(key);
+};
+
+export const recordIdentityKeys = (record) => {
+  const keys = [];
+  const state = normalizeIdentityText(record.state);
+  const county = normalizeIdentityText(record.county);
+  const owner = normalizeIdentityText(record.owner_name);
+  const address = normalizeIdentityText(record.property_address);
+  const caseNumber = normalizeIdentityNumber(record.case_number);
+  const parcel = normalizeIdentityNumber(record.parcel_apn);
+  const sourceUrl = `${record.source_url || ""}`.trim().toLowerCase();
+  const amountValue = parseMoneyIdentity(record.surplus_amount);
+  const amount = normalizeMoneyIdentity(record.surplus_amount);
+
+  addKey(keys, `case:${state}:${caseNumber}`, [state, caseNumber]);
+  addKey(keys, `case:${county}:${state}:${caseNumber}`, [county, state, caseNumber]);
+  addKey(keys, `parcel:${state}:${parcel}`, [state, parcel]);
+  addKey(keys, `parcel:${county}:${state}:${parcel}`, [county, state, parcel]);
+  addKey(keys, `source:${sourceUrl}`, [sourceUrl]);
+  addKey(keys, `property:${owner}:${address}:${county}:${state}`, [owner, address, county, state]);
+  addKey(keys, `owner:${owner}:${county}:${state}:${amount}`, [owner, county, state, amountValue > 0]);
+
+  return [...new Set(keys)];
+};
+
+export const recordIdentityKey = (record) =>
+  recordIdentityKeys(record)[0] || `record:${JSON.stringify(record)}`;
+
+export const addRecordIdentityKeys = (keySet, record) => {
+  recordIdentityKeys(record).forEach((key) => keySet.add(key));
 };
 
 export const dedupeRecords = (records) => {
   const seen = new Set();
   return records.filter((record) => {
-    const key = recordIdentityKey(record);
-    if (seen.has(key)) return false;
-    seen.add(key);
+    const keys = recordIdentityKeys(record);
+    if (keys.some((key) => seen.has(key))) return false;
+    keys.forEach((key) => seen.add(key));
     return true;
   });
 };

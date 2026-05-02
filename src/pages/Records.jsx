@@ -11,7 +11,7 @@ import PdfImportDialog from "@/components/records/PdfImportDialog";
 import DisclaimerBanner from "@/components/shared/DisclaimerBanner";
 import { calculateDealScore } from "@/lib/dealScoring";
 import { mapCsvRowToSurplusRecord, parseCsvText } from "@/lib/importRecords";
-import { dedupeRecords, listSurplusRecords, recordIdentityKey } from "@/lib/records";
+import { addRecordIdentityKeys, dedupeRecords, listSurplusRecords, recordIdentityKeys } from "@/lib/records";
 import { toast } from "sonner";
 
 export default function Records() {
@@ -70,9 +70,10 @@ export default function Records() {
         return data;
       });
 
-      const existingKeys = new Set(records.map(recordIdentityKey));
+      const existingKeys = new Set();
+      records.forEach((record) => addRecordIdentityKeys(existingKeys, record));
       const validRows = dedupeRecords(rows.filter((row) => row.owner_name && row.state && row.county));
-      const newRows = validRows.filter((row) => !existingKeys.has(recordIdentityKey(row)));
+      const newRows = validRows.filter((row) => !recordIdentityKeys(row).some((key) => existingKeys.has(key)));
       const skipped = rows.length - newRows.length;
 
       if (newRows.length === 0) {
@@ -84,6 +85,7 @@ export default function Records() {
       for (const row of newRows) {
         setCsvProgress(`Importing ${imported + 1} of ${newRows.length}...`);
         await base44.entities.SurplusRecord.create(row);
+        addRecordIdentityKeys(existingKeys, row);
         imported += 1;
       }
 

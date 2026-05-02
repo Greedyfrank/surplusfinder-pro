@@ -8,7 +8,7 @@ import axios from "axios";
 import { FileText, Upload, CheckCircle, Loader2, X } from "lucide-react";
 import { calculateDealScore } from "@/lib/dealScoring";
 import { parseSurplusRecordsFromPdfText } from "@/lib/importRecords";
-import { dedupeRecords, recordIdentityKey } from "@/lib/records";
+import { addRecordIdentityKeys, dedupeRecords, recordIdentityKeys } from "@/lib/records";
 import { toast } from "sonner";
 
 const PDFJS_VERSION = "4.10.38";
@@ -139,9 +139,10 @@ export default function PdfImportDialog({ open, onClose, onImported, existingRec
       }
 
       if (records.length > 0) {
-        const existingKeys = new Set(existingRecords.map(recordIdentityKey));
+        const existingKeys = new Set();
+        existingRecords.forEach((record) => addRecordIdentityKeys(existingKeys, record));
         const uniqueRecords = dedupeRecords(records);
-        records = uniqueRecords.filter((record) => !existingKeys.has(recordIdentityKey(record)));
+        records = uniqueRecords.filter((record) => !recordIdentityKeys(record).some((key) => existingKeys.has(key)));
         const skipped = uniqueRecords.length - records.length;
         if (skipped > 0) {
           toast.info(`${skipped} duplicate PDF record(s) were skipped.`);
@@ -181,6 +182,8 @@ export default function PdfImportDialog({ open, onClose, onImported, existingRec
 
   const handleImport = async () => {
     const toImport = extractedRecords.filter((_, i) => selected.includes(i));
+    const existingKeys = new Set();
+    existingRecords.forEach((record) => addRecordIdentityKeys(existingKeys, record));
     setStep("importing");
 
     try {
@@ -196,8 +199,10 @@ export default function PdfImportDialog({ open, onClose, onImported, existingRec
         const { score, label } = calculateDealScore(data);
         data.deal_score = data.deal_score ?? score;
         data.deal_label = data.deal_label || label;
-        if (data.owner_name && data.state && data.county) {
+        const isDuplicate = recordIdentityKeys(data).some((key) => existingKeys.has(key));
+        if (data.owner_name && data.state && data.county && !isDuplicate) {
           await base44.entities.SurplusRecord.create(data);
+          addRecordIdentityKeys(existingKeys, data);
           imported += 1;
         }
       }
