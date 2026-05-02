@@ -10,10 +10,10 @@ import { calculateDealScore } from "@/lib/dealScoring";
 import { parseSurplusRecordsFromPdfText } from "@/lib/importRecords";
 import { dedupeRecords, recordIdentityKey } from "@/lib/records";
 import { toast } from "sonner";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
-import pdfWorker from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+const PDFJS_VERSION = "4.10.38";
+const PDFJS_CDN_BASE = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/legacy/build`;
+let pdfjsPromise;
 
 const pageContentToLines = (content) => {
   const items = content.items
@@ -45,6 +45,16 @@ const pageContentToLines = (content) => {
   );
 };
 
+const loadPdfJs = async () => {
+  if (!pdfjsPromise) {
+    pdfjsPromise = import(/* @vite-ignore */ `${PDFJS_CDN_BASE}/pdf.mjs`).then((module) => {
+      module.GlobalWorkerOptions.workerSrc = `${PDFJS_CDN_BASE}/pdf.worker.mjs`;
+      return module;
+    });
+  }
+  return pdfjsPromise;
+};
+
 export default function PdfImportDialog({ open, onClose, onImported, existingRecords = [] }) {
   const [step, setStep] = useState("upload"); // upload | reviewing | importing
   const [extractedRecords, setExtractedRecords] = useState([]);
@@ -67,6 +77,7 @@ export default function PdfImportDialog({ open, onClose, onImported, existingRec
 
   const extractRecordsLocally = async (file) => {
     setSummary("Reading PDF text locally...");
+    const pdfjsLib = await loadPdfJs();
     const data = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data }).promise;
     const pages = [];
@@ -111,18 +122,20 @@ export default function PdfImportDialog({ open, onClose, onImported, existingRec
       let records = [];
       let s = "";
 
-      const localRecords = await extractRecordsLocally(file);
+      let localRecords = [];
+      try {
+        localRecords = await extractRecordsLocally(file);
+      } catch {
+        localRecords = [];
+      }
+
       if (localRecords.length > 0) {
         records = localRecords;
         s = `Found ${localRecords.length} record(s) with local PDF text extraction.`;
       } else {
-        try {
-          const remoteResult = await extractRecordsWithFunction(file);
-          records = remoteResult.records;
-          s = remoteResult.summary;
-        } catch (remoteErr) {
-          throw remoteErr;
-        }
+        const remoteResult = await extractRecordsWithFunction(file);
+        records = remoteResult.records;
+        s = remoteResult.summary;
       }
 
       if (records.length > 0) {
